@@ -18,19 +18,17 @@ def arnoldi_iteration(A, b, n):
     
     Q[:,0] = b / nl.norm(b)
 
-    for k in range(1,n+1):
+    for k in range(n):
         # New candidate vector
-        v = np.dot(A, Q[:,k-1])
+        v = np.dot(A, Q[:,k])
 
         # Subtract the projections on previous vectors
-        for j in range(k):
-            h[j,k-1] = np.dot(Q[:,j].T, v)
-            v = v - h[j,k-1] * Q[:,j]
-        
-        h[k,k-1] = nl.norm(v)
+        for j in range(k+1):
+            h[j,k] = np.dot(Q[:,j].T, v)
+            v = v - h[j,k] * Q[:,j]
         
         # Quit if the norm of v is zero
-        if h[k,k-1] <= TOLERANCE:
+        if (h[k+1,k] := nl.norm(v)) < TOLERANCE:
             break
             
         Q[:,k] = v / h[k,k-1]
