@@ -31,7 +31,7 @@ def arnoldi_iteration(A, b, n):
         if (h[k+1,k] := nl.norm(v)) < TOLERANCE:
             break
             
-        Q[:,k] = v / h[k,k-1]
+        Q[:,k+1] = v / h[k+1,k]
 
     return Q, h[:n,:]
 
