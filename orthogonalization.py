@@ -2,8 +2,14 @@ import numpy as np
 import scipy.linalg as sl
 
 
-def gram_schmidt(matrix):
+TOLERANCE = 1e-10
+
+
+def qr_with_gram_schmidt(matrix):
     m, n = matrix.shape
+
+    Q = np.eye(m)
+    R = matrix
 
     for i in range(n):
         v = matrix[:, i]
@@ -11,23 +17,23 @@ def gram_schmidt(matrix):
         # The new unit-vector must be orthogonal to all 
         # previously calculated unit-vectors (qs)
         for j in range(i):
-            q = matrix[:, j]
+            q = Q[:, j]
 
             # Find the appropiate coefficient for orthogonality
-            r = np.dot(q, v)
+            R[i,j] = np.dot(q, v)
 
-            v -= r * q
+            v -= R[i,j] * q
 
         # Save the new vector normalized
-        matrix[:, i] = v / sl.norm(v)
+        Q[:, i] = v / sl.norm(v)
 
-    return matrix
+    return Q, R
 
 
 def qr_with_reflections(matrix):
     m, n = matrix.shape
 
-    Q = np.identity(matrix.shape[0])
+    Q = np.eye(m)
     R = matrix
 
     for i in range(n-1):
@@ -42,14 +48,16 @@ def qr_with_reflections(matrix):
         v = u / sl.norm(u)
 
         # Reflection across the plane orthogonal to v
-        P = np.identity(dim) - 2 * np.outer(v, v)
+        P = np.eye(dim) - 2 * np.outer(v, v)
 
         # Add identity vectors for the dimensions that 
         # have already been computed
-        P = np.pad(np.identity(i), (0, dim)) + np.pad(P, (i, 0))
+        P = np.pad(np.eye(i), (0, dim)) + np.pad(P, (i, 0))
 
-        Q = np.matmul(Q, P)
-        R = np.matmul(P, R)
+        Q = Q @ P
+        R = P @ R
+
+    R[np.abs(R) < TOLERANCE] = 0
 
     return Q, R
 
@@ -57,7 +65,7 @@ def qr_with_reflections(matrix):
 def qr_with_rotations(matrix):
     m, n = matrix.shape
 
-    Q = np.identity(m)
+    Q = np.eye(m)
     R = matrix
 
     for i in range(n-1):
@@ -65,8 +73,10 @@ def qr_with_rotations(matrix):
             # Rotation to nullify the value at i,j
             G = givens_rotation(R, i, j, m)
 
-            Q = np.matmul(Q, G.T)
-            R = np.matmul(G, R)
+            Q = Q @ G.T
+            R = G @ R
+
+    R[np.abs(R) < TOLERANCE] = 0
 
     return Q, R
 
